@@ -32,10 +32,14 @@ const githubProjectsConfig = {
     perPage: 100
 };
 
+let githubRepositories = [];
+let fallbackProjectArticles = [];
+
 function createProjectArticle(repository) {
     const article = document.createElement('article');
     const title = document.createElement('h3');
     const link = document.createElement('a');
+    const topics = document.createElement('div');
     const description = document.createElement('p');
 
     link.href = repository.html_url;
@@ -46,11 +50,89 @@ function createProjectArticle(repository) {
     title.appendChild(link);
     title.append(' | Projeto no GitHub');
 
+    topics.className = 'project-topics';
+    topics.setAttribute('aria-label', 'Tópicos do projeto');
+
+    if (Array.isArray(repository.topics) && repository.topics.length > 0) {
+        repository.topics.forEach(topic => {
+            const tag = document.createElement('span');
+
+            tag.className = 'project-topic';
+            tag.textContent = topic;
+            topics.appendChild(tag);
+        });
+    }
+
     description.textContent = repository.description || 'Projeto disponível no GitHub.';
 
-    article.append(title, description);
+    article.append(title);
+
+    if (topics.children.length > 0) {
+        article.appendChild(topics);
+    }
+
+    article.appendChild(description);
 
     return article;
+}
+
+function repositoryMatchesSearch(repository, searchTerm) {
+    const searchableContent = [
+        repository.name,
+        repository.description,
+        repository.language,
+        ...(Array.isArray(repository.topics) ? repository.topics : [])
+    ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return searchableContent.includes(searchTerm.toLowerCase());
+}
+
+function renderProjects(repositories) {
+    const projectsList = document.querySelector('#projetos .projects-list');
+
+    if (!projectsList) {
+        return;
+    }
+
+    const projectListFragment = document.createDocumentFragment();
+
+    repositories.forEach(repository => {
+        projectListFragment.appendChild(createProjectArticle(repository));
+    });
+
+    projectsList.replaceChildren(projectListFragment);
+}
+
+function filterFallbackProjects(searchTerm) {
+    fallbackProjectArticles.forEach(article => {
+        article.style.display = article.textContent.toLowerCase().includes(searchTerm.toLowerCase()) ? 'block' : 'none';
+    });
+}
+
+function setupProjectSearch() {
+    const searchInput = document.getElementById('projects-search-input');
+
+    if (!searchInput) {
+        return;
+    }
+
+    searchInput.addEventListener('input', event => {
+        const searchTerm = event.target.value.trim();
+
+        if (githubRepositories.length === 0) {
+            filterFallbackProjects(searchTerm);
+            return;
+        }
+
+        const filteredRepositories = searchTerm
+            ? githubRepositories.filter(repository => repositoryMatchesSearch(repository, searchTerm))
+            : githubRepositories;
+
+        renderProjects(filteredRepositories);
+    });
 }
 
 async function loadGitHubProjects() {
@@ -76,20 +158,13 @@ async function loadGitHubProjects() {
         }
 
         const repositories = await response.json();
-        const personalRepositories = repositories.filter(repository => !repository.fork && !repository.archived);
+        githubRepositories = repositories.filter(repository => !repository.fork && !repository.archived);
 
-        if (personalRepositories.length === 0) {
+        if (githubRepositories.length === 0) {
             return;
         }
 
-        const projectTitle = projectsSection.querySelector('h2');
-        const projectList = document.createDocumentFragment();
-
-        personalRepositories.forEach(repository => {
-            projectList.appendChild(createProjectArticle(repository));
-        });
-
-        projectsSection.replaceChildren(projectTitle, projectList);
+        renderProjects(githubRepositories);
     } catch (error) {
         console.warn('Não foi possível carregar os projetos do GitHub. Mantendo projetos cadastrados no HTML.', error);
     }
@@ -97,6 +172,8 @@ async function loadGitHubProjects() {
 
 // Inicializar com a primeira aba
 document.addEventListener('DOMContentLoaded', () => {
+    fallbackProjectArticles = Array.from(document.querySelectorAll('#projetos .projects-list article'));
+    setupProjectSearch();
     loadGitHubProjects();
     showTab('experiencia-profissional');
 });
