@@ -153,7 +153,7 @@ a:hover {
     min-width: 250px;
     height: fit-content;
     position: sticky;
-    top: 300px;
+    top: 20px; /* Alinhado ao topo do container */
 }
 
 .sidebar nav ul {
