@@ -41,20 +41,57 @@ a:hover {
 .contact-info p, .links-info p {
     margin: 5px 0;
 }
-.skills-section div {
-    margin-bottom: 10px;
+/* Estilos das Tags e Carrossel */
+.carousel-container {
+    overflow: hidden;
+    padding: 15px 0;
+    margin: 10px 0;
+    width: 100%;
+    position: relative;
 }
-.skill-category {
-    font-weight: bold;
+
+.carousel-track {
+    display: flex;
+    width: max-content;
+    animation: scroll 30s linear infinite;
 }
-.skill-item {
+
+.carousel-track:hover {
+    animation-play-state: paused;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.skill-tag {
+    background-color: #f0f0f0;
+    color: #333;
+    padding: 8px 18px;
+    border-radius: 25px;
+    margin: 0 10px;
+    font-size: 0.85em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    border: 1px solid #ddd;
     display: inline-block;
-    margin-right: 8px;
-    background-color: #e9e9e9;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.9em;
 }
+
+.skill-tag:hover {
+    background-color: #007bff;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-color: #007bff;
+}
+
 button {
     background-color: #007bff;
     color: white;
